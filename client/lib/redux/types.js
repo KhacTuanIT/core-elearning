@@ -1,0 +1,1 @@
+export const fetchCategory = "FETCH_CATEGORY"

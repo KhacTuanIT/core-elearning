@@ -1,0 +1,12 @@
+﻿CREATE TABLE [dbo].[Category]
+(
+	[Id] UNIQUEIDENTIFIER NOT NULL, 
+    [CategoryName] NVARCHAR(250) NULL, 
+    [IsHide] BIT NOT NULL DEFAULT 0,
+    [IsDeleted] BIT NOT NULL DEFAULT 0,
+    [CreatedAt] DATETIME NULL, 
+    [CreatedBy] UNIQUEIDENTIFIER NULL, 
+    [UpdatedAt] DATETIME NULL, 
+    [UpdatedBy] UNIQUEIDENTIFIER NULL
+    CONSTRAINT PK_Category PRIMARY KEY (Id)
+)
