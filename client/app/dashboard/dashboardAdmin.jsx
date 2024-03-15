@@ -11,6 +11,7 @@ import routes from './routes'
 import { setOpenConfigurator } from '@/lib/redux/reducers/dashboard'
 import { Cog6ToothIcon } from '@heroicons/react/24/outline'
 import { useDispatch, useSelector } from 'react-redux'
+import 'react-quill/dist/quill.snow.css' // Import Quill styles
 
 export function DashboardAdmin({ children }) {
   const dispatch = useDispatch()

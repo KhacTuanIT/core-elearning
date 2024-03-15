@@ -22,7 +22,7 @@ builder.Services.AddSwaggerGen();
 //    options.FallbackPolicy = options.DefaultPolicy;
 //});
 builder.Services.AddDbContext<CoreELearningDbContext>(
-    options => options.UseSqlServer(connectionString));
+    options => options.UseSqlServer(connectionString ?? "Default"));
 builder.Services.AddScoped<DbContext, CoreELearningDbContext>();
 builder.Services.AddSettingService();
 builder.Services.AddUowService();

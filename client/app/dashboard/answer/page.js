@@ -1,54 +1,104 @@
 'use client'
 import Idle from '@/app/components/animations/idle'
-import { adminModePage } from '@/app/constants/utils'
+import {
+  adminModePage,
+  handleValidateData,
+  validateAnswerFields,
+} from '@/app/constants/utils'
 import DashedLoading from '@/app/loading/dashedLoading'
 import {
   createAnswer,
+  deleteAnswer,
   fetchAnswerAsync,
   getAnswerByIdAsync,
+  restoreAnswer,
   updateAnswer,
 } from '@/lib/redux/thunks/answerThunk'
 import { useEffect, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import { setAnswer } from '@/lib/redux/reducers/answerReducer'
-import { AddPaper, PenSlash, XMark } from '@/app/components/icons'
+import {
+  getAnswer,
+  setAnswer,
+  setAnswerById,
+} from '@/lib/redux/reducers/answerReducer'
+import {
+  AddPaper,
+  PenSlash,
+  Restore,
+  TrashCan,
+  XMark,
+} from '@/app/components/icons'
 import Editor from '@/app/components/forms/Editor'
 import RingLoading from '@/app/loading/ringLoading'
+import {
+  setQuestion,
+  setQuestionById,
+} from '@/lib/redux/reducers/questionReducer'
+import { fetchQuestionAsync } from '@/lib/redux/thunks/questionThunk'
+import QuillContent from '@/app/components/content/quillContent'
 
 export default function Answer({ item }) {
   const [mode, setMode] = useState(adminModePage.view)
   const [editId, setEditId] = useState(null)
+  const { questions, currentQuestion } = useSelector((state) => state.question)
   const { answers, currentAnswer, isLoading } = useSelector(
     (state) => state.answer,
   )
-  const [updateItem, setUpdateItem] = useState(item)
+  const [updateItem, setUpdateItem] = useState(null)
+  const [errorValidation, setErrorValidation] = useState()
+  const [isNeedValidate, setIsNeedValidate] = useState(false)
   const dispatch = useDispatch()
-
-  useEffect(() => {
-    setUpdateItem({})
-  }, [])
 
   useEffect(() => {
     setUpdateItem(currentAnswer)
   }, [currentAnswer])
 
   useEffect(() => {
-    if (editId) dispatch(getAnswerByIdAsync(editId))
+    if (editId) {
+      setAnswerById(editId)
+      if (
+        currentAnswer === undefined ||
+        currentAnswer === null ||
+        currentAnswer.id !== editId
+      ) {
+        dispatch(getAnswerByIdAsync(editId))
+      }
+      setUpdateItem(currentAnswer)
+      setQuestionById(currentAnswer?.questionId)
+    }
   }, [editId])
 
   useEffect(() => {
     const unsubscriberFetchAnswer = () => {
       dispatch(fetchAnswerAsync())
+      dispatch(fetchQuestionAsync())
     }
     return unsubscriberFetchAnswer
   }, [])
 
+  useEffect(() => {
+    if (mode === adminModePage.view || mode === adminModePage.create) {
+      clearCurrentItem()
+      setQuestion(questions[0])
+    } else {
+    }
+  }, [mode])
+
   const handleInputChange = (e) => {
+    console.log(e)
     const { name, value } = e.target
-    setUpdateItem({
+    const item = {
       ...updateItem,
       [name]: value,
-    })
+    }
+    setUpdateItem(item)
+    isNeedValidate &&
+      handleValidateData(mode, item, validateQuestionFields, setErrorValidation)
+  }
+
+  const handleViewDetail = (id) => {
+    setMode(adminModePage.viewDetail)
+    setEditId(id)
   }
 
   const handleEditorChange = (value) => {
@@ -65,25 +115,62 @@ export default function Answer({ item }) {
 
   const handleCancel = () => {
     setMode(adminModePage.view)
-    clearCurrentItem()
   }
 
   const handleUpdate = () => {
-    dispatch(updateAnswer(updateItem))
+    if (
+      handleValidateData(
+        mode,
+        updateItem,
+        validateAnswerFields,
+        setErrorValidation,
+      )
+    ) {
+      setIsNeedValidate(false)
+      dispatch(updateAnswer(updateItem))
+    } else {
+      setIsNeedValidate(true)
+    }
+    return
   }
 
   const handleCreateMode = () => {
     setMode(adminModePage.create)
-    clearCurrentItem()
   }
 
   const handleAdd = () => {
-    dispatch(createAnswer(updateItem))
+    if (
+      handleValidateData(
+        mode,
+        updateItem,
+        validateAnswerFields,
+        setErrorValidation,
+      )
+    ) {
+      setIsNeedValidate(false)
+      dispatch(createAnswer(updateItem))
+    } else {
+      setIsNeedValidate(true)
+    }
+    return
+  }
+
+  const handleRestore = (id) => {
+    dispatch(restoreAnswer(id))
+  }
+
+  const handleDelete = (id) => {
+    dispatch(deleteAnswer(id))
   }
 
   const clearCurrentItem = () => {
-    setUpdateItem({})
-    setAnswer({})
+    let item = {
+      questionId: null,
+      answerText: null,
+      shortAnswer: null,
+    }
+    setAnswer({ ...updateItem, questionId: currentQuestion?.id })
+    setUpdateItem({ ...updateItem, questionId: currentQuestion?.id })
   }
 
   const renderEditViewMode = () => {
@@ -116,7 +203,41 @@ export default function Answer({ item }) {
                 </div>
               </div>
               <div className="mb-4 grid grid-cols-6">
-                <div className="flex items-center">Name:</div>
+                <div className="flex items-center">Question:</div>
+                <div className="col-span-5 flex flex-col">
+                  <select
+                    name="questionId"
+                    value={updateItem.questionId}
+                    onChange={handleInputChange}
+                    className={`flex-1 rounded-[6px] border border-slate-400 px-3 py-2 ${errorValidation && errorValidation['categoryId'] ? 'border-red-600' : ''}`}
+                  >
+                    {questions && questions.length > 0 ? (
+                      questions.map((item) => {
+                        return (
+                          <option
+                            selected={
+                              updateItem.questionId === item.id
+                                ? 'selected'
+                                : ''
+                            }
+                            key={item.id}
+                            value={item.id}
+                          >
+                            {item.questionText}
+                          </option>
+                        )
+                      })
+                    ) : (
+                      <option>No selection</option>
+                    )}
+                  </select>
+                  <div className="h-[20px] min-h-[20px] text-sm text-red-600">
+                    {errorValidation && errorValidation['questionId']}
+                  </div>
+                </div>
+              </div>
+              <div className="mb-4 grid grid-cols-6">
+                <div className="flex items-center">Short answer:</div>
                 <div className="col-span-5 flex">
                   <input
                     name="shortAnswer"
@@ -127,7 +248,7 @@ export default function Answer({ item }) {
                 </div>
               </div>
               <div className="mb-20 grid grid-cols-6">
-                <div className="flex items-center">Name:</div>
+                <div className="flex items-center">Answer:</div>
                 <div className="col-span-5 flex">
                   <Editor
                     content={updateItem.answerText}
@@ -170,7 +291,38 @@ export default function Answer({ item }) {
               <XMark size={'h-6 w-6'} />
             </button>
           </div>
-
+          <div className="mb-4 grid grid-cols-6">
+            <div className="flex items-center">Question:</div>
+            <div className="col-span-5 flex flex-col">
+              <select
+                name="questionId"
+                value={updateItem?.questionId}
+                onChange={handleInputChange}
+                className={`flex-1 rounded-[6px] border border-slate-400 px-3 py-2 ${errorValidation && errorValidation['categoryId'] ? 'border-red-600' : ''}`}
+              >
+                {questions && questions.length > 0 ? (
+                  questions.map((item) => {
+                    return (
+                      <option
+                        selected={
+                          updateItem?.questionId === item.id ? 'selected' : ''
+                        }
+                        key={item.id}
+                        value={item.id}
+                      >
+                        {item.questionText}
+                      </option>
+                    )
+                  })
+                ) : (
+                  <option>No selection</option>
+                )}
+              </select>
+              <div className="h-[20px] min-h-[20px] text-sm text-red-600">
+                {errorValidation && errorValidation['questionId']}
+              </div>
+            </div>
+          </div>
           <div className="rounded-md bg-neutral-50 px-2 py-3">
             <div className="mb-4 grid grid-cols-6">
               <div className="flex items-center">Short Answer:</div>
@@ -179,7 +331,7 @@ export default function Answer({ item }) {
                   name="shortAnswer"
                   onChange={handleInputChange}
                   className="w-full rounded-[6px] border border-slate-400 px-3 py-2 outline-none transition-all duration-100 focus:!border-slate-600 focus:outline-none"
-                  value={updateItem.shortAnswer}
+                  value={updateItem?.shortAnswer}
                 />
               </div>
             </div>
@@ -187,7 +339,7 @@ export default function Answer({ item }) {
               <div className="flex items-center">Answer:</div>
               <div className="col-span-5 flex">
                 <Editor
-                  content={updateItem.answerText}
+                  content={updateItem?.answerText}
                   handleEditorChange={handleEditorChange}
                 />
               </div>
@@ -206,12 +358,91 @@ export default function Answer({ item }) {
     )
   }
 
+  const renderViewDetail = () => {
+    if (currentAnswer === null || currentAnswer === undefined) return <></>
+    return (
+      <>
+        <div className="">
+          <div className="mb-4 flex items-center justify-between bg-neutral-50 px-2 py-2 text-xl font-medium">
+            <span>{currentAnswer.shortAnswer}</span>
+            <button className="hover:opacity-85" onClick={handleCancel}>
+              <XMark size={'h-6 w-6'} />
+            </button>
+          </div>
+          <div className="rounded-md bg-neutral-50 px-2 pb-3">
+            <div className="grid grid-cols-6">
+              <div className="flex">Created By:</div>
+              <div className="col-span-5 flex flex-col">
+                {currentAnswer.createdBy}
+              </div>
+            </div>
+          </div>
+          <div className="rounded-md bg-neutral-50 px-2 pb-3">
+            <div className="grid grid-cols-6">
+              <div className="flex">Created At:</div>
+              <div className="col-span-5 flex flex-col">
+                {currentAnswer.createdAt}
+              </div>
+            </div>
+          </div>
+          <div className="rounded-md bg-neutral-50 px-2 pb-3">
+            <div className="grid grid-cols-6">
+              <div className="flex">Last updated By:</div>
+              <div className="col-span-5 flex flex-col">
+                {currentAnswer.updatedBy}
+              </div>
+            </div>
+          </div>
+          <div className="rounded-md bg-neutral-50 px-2 pb-3">
+            <div className="grid grid-cols-6">
+              <div className="flex">Last updated At:</div>
+              <div className="col-span-5 flex flex-col">
+                {currentAnswer.updatedAt}
+              </div>
+            </div>
+          </div>
+          <div className="rounded-md bg-neutral-50 px-2 pb-3">
+            <div className="grid grid-cols-6">
+              <div className="flex">State:</div>
+              <div className="col-span-5 flex flex-col">
+                {currentAnswer.isDeleted ? (
+                  <span className="text-red-400">Deleted</span>
+                ) : (
+                  <span className="text-green-400">Active</span>
+                )}
+              </div>
+            </div>
+          </div>
+          <div className="rounded-md bg-neutral-50 px-2 pb-3">
+            <div className="mb-1">
+              <div className="pt-2">Question:</div>
+              <div>{currentQuestion?.questionText}</div>
+            </div>
+          </div>
+          <div className="rounded-md bg-neutral-50 px-2 pb-3">
+            <div className="mb-1">
+              <div className="pt-2">Answer:</div>
+              {/* <div
+                dangerouslySetInnerHTML={{ __html: currentAnswer?.answerText }}
+              /> */}
+              <div>
+                <QuillContent value={currentAnswer?.answerText} />
+              </div>
+            </div>
+          </div>
+        </div>
+      </>
+    )
+  }
+
   const renderContentView = () => {
     switch (mode) {
       case adminModePage.edit:
         return renderEditViewMode()
       case adminModePage.create:
         return renderCreateViewMode()
+      case adminModePage.viewDetail:
+        return renderViewDetail()
       default:
         return <Idle number={40} />
     }
@@ -233,8 +464,8 @@ export default function Answer({ item }) {
       </div>
       <div className="mt-4 grid grid-cols-3">
         <div>
-          <div className="overflow-y-auto overflow-x-hidden rounded-md bg-slate-50 p-3">
-            <table className="w-full min-w-max table-auto text-left">
+          <div className="flex overflow-y-auto overflow-x-hidden rounded-md bg-slate-50 p-3">
+            <table className="w-full max-w-full flex-1 table-fixed text-left">
               <thead>
                 <tr>
                   <th className="border-blue-gray-100 bg-blue-gray-50 border-b py-4">
@@ -258,8 +489,29 @@ export default function Answer({ item }) {
                         key={item.id}
                         className="transition-all duration-150 even:bg-gray-200/50 hover:bg-slate-200 hover:text-slate-500"
                       >
-                        <td className="p-2">{item.shortAnswer}</td>
-                        <td className="w-6">
+                        <td className="truncate p-2">
+                          <span className="flex">
+                            <span
+                              className="inline-block truncate pr-2 hover:cursor-pointer"
+                              onClick={() => handleViewDetail(item.id)}
+                              title={item.shortAnswer}
+                            >
+                              {item.shortAnswer}
+                            </span>
+                            {item.isDeleted ? (
+                              <span class="relative flex h-2 w-2">
+                                <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-400 opacity-75"></span>
+                                <span class="relative inline-flex h-2 w-2 rounded-full bg-red-500"></span>
+                              </span>
+                            ) : (
+                              <span class="relative flex h-2 w-2">
+                                <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-400 opacity-75"></span>
+                                <span class="relative inline-flex h-2 w-2 rounded-full bg-green-500"></span>
+                              </span>
+                            )}
+                          </span>
+                        </td>
+                        <td className="w-14 max-w-14 text-right">
                           <button
                             className="hover:text-red-600"
                             onClick={() => handleEditMode(item.id)}
@@ -268,6 +520,25 @@ export default function Answer({ item }) {
                               size="h-4 w-4"
                               hoverEffect="hover:stroke-red-600 hover:opacity-65"
                             />
+                          </button>
+                          <button
+                            onClick={() =>
+                              item.isDeleted
+                                ? handleRestore(item.id)
+                                : handleDelete(item.id)
+                            }
+                          >
+                            {item.isDeleted ? (
+                              <Restore
+                                size={'h-4 w-4'}
+                                hoverEffect={'hover:stroke-green-400'}
+                              />
+                            ) : (
+                              <TrashCan
+                                size={'h-4 w-4'}
+                                hoverEffect={'hover:opacity-65'}
+                              />
+                            )}
                           </button>
                         </td>
                       </tr>

@@ -1,5 +1,4 @@
 ﻿using CommonLibrary.EDbContext;
-using CommonLibrary.Services;
 using CommonLibrary.Services.Interfaces;
 using CommonLibrary.ViewModel;
 using Microsoft.AspNetCore.Mvc;
@@ -52,8 +51,8 @@ namespace CoreELearning.Controllers
         {
             var answers = await _answerService.GetAnswersByQuestionId(questionId);
 
-            return new ResponseVM() 
-            { 
+            return new ResponseVM()
+            {
                 Data = answers,
                 Success = true
             };
@@ -65,6 +64,7 @@ namespace CoreELearning.Controllers
             var insertAnswer = new Answer
             {
                 AnswerText = answer.AnswerText,
+                ShortAnswer = answer.ShortAnswer,
                 QuestionId = answer.QuestionId,
             };
             var result = await _answerService.AddAnswer(insertAnswer);
@@ -79,6 +79,7 @@ namespace CoreELearning.Controllers
                 Id = answerId,
                 ShortAnswer = answer.ShortAnswer,
                 AnswerText = answer.AnswerText,
+                QuestionId = answer.QuestionId,
             };
             var result = await _answerService.UpdateAnswer(answerId, updateAnswer);
             return ResponseResult(result);

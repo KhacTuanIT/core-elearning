@@ -117,6 +117,7 @@ namespace CommonLibrary.Services
             }
 
             entity.QuestionText = question.QuestionText;
+            entity.CategoryId = question.CategoryId;
             entity.Description = question.Description;
             entity.LastUpdate(Guid.Empty);
 

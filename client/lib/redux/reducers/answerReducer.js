@@ -20,7 +20,17 @@ export const answer = createSlice({
   initialState: initialState,
   reducers: {
     setAnswer(state, action) {
-      state.currentAnswer = action.payload
+      return {
+        ...state,
+        currentAnswer: action.payload,
+      }
+    },
+    setAnswerById(state, action) {
+      const answer = state.answers.find((x) => x.id === action.payload)
+      return {
+        ...state,
+        currentAnswer: answer,
+      }
     },
   },
   extraReducers: (builder) => {
@@ -90,9 +100,9 @@ export const answer = createSlice({
         state.isLoading = true
       }),
       builder.addCase(deleteAnswer.fulfilled, (state, action) => {
-        state.currentCategory = action.payload.data
-        if (state.categories.length > 0) {
-          state.categories = state.categories.map((item) => {
+        state.currentAnswer = action.payload.data
+        if (state.answers.length > 0) {
+          state.answers = state.answers.map((item) => {
             if (item.id === action.payload.data.id) {
               item = action.payload.data
             }
@@ -108,9 +118,9 @@ export const answer = createSlice({
         state.isLoading = true
       }),
       builder.addCase(restoreAnswer.fulfilled, (state, action) => {
-        state.currentCategory = action.payload.data
-        if (state.categories.length > 0) {
-          state.categories = state.categories.map((item) => {
+        state.currentAnswer = action.payload.data
+        if (state.answers.length > 0) {
+          state.answers = state.answers.map((item) => {
             if (item.id === action.payload.data.id) {
               item = action.payload.data
             }
@@ -125,4 +135,4 @@ export const answer = createSlice({
   },
 })
 
-export const { setAnswer } = answer.actions
+export const { setAnswer, setAnswerById } = answer.actions

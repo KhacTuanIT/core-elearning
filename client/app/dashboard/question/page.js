@@ -8,14 +8,20 @@ import {
 import DashedLoading from '@/app/loading/dashedLoading'
 import {
   createQuestion,
+  deleteQuestion,
   fetchQuestionAsync,
   getQuestionByIdAsync,
+  restoreQuestion,
   updateQuestion,
 } from '@/lib/redux/thunks/questionThunk'
 import { fetchCategoryAsync } from '@/lib/redux/thunks/categoryThunk'
 import { useEffect, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import { getQuestion, setQuestion } from '@/lib/redux/reducers/questionReducer'
+import {
+  getQuestion,
+  setQuestion,
+  setQuestionById,
+} from '@/lib/redux/reducers/questionReducer'
 import {
   AddPaper,
   PenSlash,
@@ -26,7 +32,10 @@ import {
 import _ from 'lodash'
 import RingLoading from '@/app/loading/ringLoading'
 import { getAnswersByQuestionIdAsync } from '@/lib/redux/thunks/answerThunk'
-import { getCategory } from '@/lib/redux/reducers/categoryReducer'
+import {
+  setCategory,
+  setCategoryById,
+} from '@/lib/redux/reducers/categoryReducer'
 
 export default function Question() {
   const [mode, setMode] = useState(adminModePage.view)
@@ -55,7 +64,7 @@ export default function Question() {
 
   useEffect(() => {
     if (editId) {
-      getQuestion(editId)
+      setQuestionById(editId)
       if (
         currentQuestion === undefined ||
         currentQuestion === null ||
@@ -63,6 +72,8 @@ export default function Question() {
       ) {
         dispatch(getQuestionByIdAsync(editId))
       }
+      setCategoryById(currentQuestion?.categoryId)
+      setUpdateItem(currentQuestion)
     }
   }, [editId])
 
@@ -77,20 +88,15 @@ export default function Question() {
   useEffect(() => {
     if (mode === adminModePage.view || mode === adminModePage.create) {
       clearCurrentItem()
-      if (categories && categories.length > 0) {
-        setUpdateItem({ ...updateItem, categoryId: categories[0].id })
-      }
+      setCategory(categories[0])
     } else if (mode === adminModePage.viewDetail) {
       dispatch(getAnswersByQuestionIdAsync(editId))
-    } else if (mode === adminModePage.edit) {
-      setUpdateItem({ ...updateItem, categoryId: currentQuestion.categoryId })
     }
-    getCategory(currentQuestion.categoryId)
   }, [mode])
 
   const handleInputChange = (e) => {
-    console.log(e)
     const { name, value } = e.target
+    console.log(name, value)
     const item = {
       ...updateItem,
       [name]: value,
@@ -124,6 +130,7 @@ export default function Question() {
       )
     ) {
       setIsNeedValidate(false)
+      console.log(updateItem)
       dispatch(updateQuestion(updateItem))
     } else {
       setIsNeedValidate(true)
@@ -152,17 +159,22 @@ export default function Question() {
     return
   }
 
+  const handleRestore = (id) => {
+    dispatch(restoreQuestion(id))
+  }
+
+  const handleDelete = (id) => {
+    dispatch(deleteQuestion(id))
+  }
+
   const clearCurrentItem = () => {
     let item = {
       categoryId: null,
       questionText: null,
       description: null,
     }
-    if (adminModePage.edit) {
-      item.id = null
-    }
-    setUpdateItem(item)
-    setQuestion(item)
+    setQuestion({ ...item, categoryId: currentCategory?.id })
+    setUpdateItem({ ...item, categoryId: currentCategory?.id })
   }
 
   const renderEditViewMode = () => {
@@ -294,7 +306,7 @@ export default function Question() {
               <div className="col-span-5 flex flex-col">
                 <select
                   name="categoryId"
-                  value={updateItem.categoryId}
+                  value={updateItem?.categoryId}
                   onChange={handleInputChange}
                   className={`flex-1 rounded-[6px] border border-slate-400 px-3 py-2 ${errorValidation && errorValidation['categoryId'] ? 'border-red-600' : ''}`}
                 >
@@ -328,7 +340,7 @@ export default function Question() {
               </div>
             </div>
             <div className="mb-4 grid grid-cols-6">
-              <div className="flex pt-2">Name:</div>
+              <div className="flex pt-2">Description:</div>
               <div className="col-span-5 flex flex-col">
                 <input
                   name="description"
@@ -364,7 +376,7 @@ export default function Question() {
               <XMark size={'h-6 w-6'} />
             </button>
           </div>
-          <div className="rounded-md bg-neutral-50 px-2 py-3">
+          <div className="rounded-md bg-neutral-50 px-2 pb-3">
             <div className="grid grid-cols-6">
               <div className="flex">Description:</div>
               <div className="col-span-5 flex flex-col">
@@ -372,7 +384,7 @@ export default function Question() {
               </div>
             </div>
           </div>
-          <div className="rounded-md bg-neutral-50 px-2 py-3">
+          <div className="rounded-md bg-neutral-50 px-2 pb-3">
             <div className="grid grid-cols-6">
               <div className="flex">Created By:</div>
               <div className="col-span-5 flex flex-col">
@@ -380,7 +392,7 @@ export default function Question() {
               </div>
             </div>
           </div>
-          <div className="rounded-md bg-neutral-50 px-2 py-3">
+          <div className="rounded-md bg-neutral-50 px-2 pb-3">
             <div className="grid grid-cols-6">
               <div className="flex">Created At:</div>
               <div className="col-span-5 flex flex-col">
@@ -388,7 +400,7 @@ export default function Question() {
               </div>
             </div>
           </div>
-          <div className="rounded-md bg-neutral-50 px-2 py-3">
+          <div className="rounded-md bg-neutral-50 px-2 pb-3">
             <div className="grid grid-cols-6">
               <div className="flex">Last updated By:</div>
               <div className="col-span-5 flex flex-col">
@@ -396,7 +408,7 @@ export default function Question() {
               </div>
             </div>
           </div>
-          <div className="rounded-md bg-neutral-50 px-2 py-3">
+          <div className="rounded-md bg-neutral-50 px-2 pb-3">
             <div className="grid grid-cols-6">
               <div className="flex">Last updated At:</div>
               <div className="col-span-5 flex flex-col">
@@ -404,7 +416,7 @@ export default function Question() {
               </div>
             </div>
           </div>
-          <div className="rounded-md bg-neutral-50 px-2 py-3">
+          <div className="rounded-md bg-neutral-50 px-2 pb-3">
             <div className="grid grid-cols-6">
               <div className="flex">State:</div>
               <div className="col-span-5 flex flex-col">
@@ -416,14 +428,20 @@ export default function Question() {
               </div>
             </div>
           </div>
-          <div className="rounded-md bg-neutral-50 px-2 py-3">
+          <div className="rounded-md bg-neutral-50 px-2 pb-3">
+            <div className="mb-1">
+              <div className="pt-2">Category:</div>
+              <div>{currentCategory?.categoryName}</div>
+            </div>
+          </div>
+          <div className="rounded-md bg-neutral-50 px-2 pb-3">
             <div className="mb-4">
               <div className="pt-2">Child answers:</div>
               <div>
                 {answers && answers.length > 0 ? (
                   <ul>
-                    {answers.map((question) => {
-                      return <li>{question.questionText}</li>
+                    {answers.map((answer) => {
+                      return <li>{answer.shortAnswer}</li>
                     })}
                   </ul>
                 ) : (

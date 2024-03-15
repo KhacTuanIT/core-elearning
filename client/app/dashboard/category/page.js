@@ -16,7 +16,7 @@ import {
 } from '@/lib/redux/thunks/categoryThunk'
 import { useEffect, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import { getCategory, setCategory } from '@/lib/redux/reducers/categoryReducer'
+import { setCategory, setCategoryById } from '@/lib/redux/reducers/categoryReducer'
 import {
   AddPaper,
   PenSlash,
@@ -38,6 +38,7 @@ export default function Category() {
     categoryName: null,
   })
   const [errorValidation, setErrorValidation] = useState()
+  const [isNeedValidate, setIsNeedValidate] = useState(false)
   const dispatch = useDispatch()
 
   useEffect(() => {
@@ -50,7 +51,7 @@ export default function Category() {
 
   useEffect(() => {
     if (editId) {
-      getCategory(editId)
+      setCategoryById(editId)
       if (
         currentCategory === undefined ||
         currentCategory === null ||
@@ -74,7 +75,7 @@ export default function Category() {
     } else if (mode === adminModePage.viewDetail) {
       dispatch(getQuestionsByCategoryIdAsync(editId))
     }
-  }, [mode])
+  }, [mode, editId])
 
   const handleInputChange = (e) => {
     const { name, value } = e.target
@@ -83,7 +84,7 @@ export default function Category() {
       [name]: value,
     }
     setUpdateItem(item)
-    handleValidateData(mode, item, validateCategoryFields, setErrorValidation)
+    isNeedValidate && handleValidateData(mode, item, validateCategoryFields, setErrorValidation)
   }
 
   const handleViewDetail = (id) => {
@@ -111,6 +112,10 @@ export default function Category() {
     ) {
       dispatch(updateCategory(updateItem))
       setMode(adminModePage.view)
+      setIsNeedValidate(false)
+    }
+    else {
+      setIsNeedValidate(true)
     }
     return
   }
@@ -130,6 +135,10 @@ export default function Category() {
     ) {
       dispatch(createCategory(updateItem))
       setMode(adminModePage.view)
+      setIsNeedValidate(false)
+    }
+    else {
+      setIsNeedValidate(true)
     }
     return
   }
@@ -262,7 +271,7 @@ export default function Category() {
             </button>
           </div>
 
-          <div className="rounded-md bg-neutral-50 px-2 py-3">
+          <div className="rounded-md bg-neutral-50 px-2 pb-3">
             <div className="grid grid-cols-6">
               <div className="flex">Created By:</div>
               <div className="col-span-5 flex flex-col">
@@ -270,7 +279,7 @@ export default function Category() {
               </div>
             </div>
           </div>
-          <div className="rounded-md bg-neutral-50 px-2 py-3">
+          <div className="rounded-md bg-neutral-50 px-2 pb-3">
             <div className="grid grid-cols-6">
               <div className="flex">Created At:</div>
               <div className="col-span-5 flex flex-col">
@@ -278,7 +287,7 @@ export default function Category() {
               </div>
             </div>
           </div>
-          <div className="rounded-md bg-neutral-50 px-2 py-3">
+          <div className="rounded-md bg-neutral-50 px-2 pb-3">
             <div className="grid grid-cols-6">
               <div className="flex">Last updated By:</div>
               <div className="col-span-5 flex flex-col">
@@ -286,7 +295,7 @@ export default function Category() {
               </div>
             </div>
           </div>
-          <div className="rounded-md bg-neutral-50 px-2 py-3">
+          <div className="rounded-md bg-neutral-50 px-2 pb-3">
             <div className="grid grid-cols-6">
               <div className="flex">Last updated At:</div>
               <div className="col-span-5 flex flex-col">
@@ -294,7 +303,7 @@ export default function Category() {
               </div>
             </div>
           </div>
-          <div className="rounded-md bg-neutral-50 px-2 py-3">
+          <div className="rounded-md bg-neutral-50 px-2 pb-3">
             <div className="grid grid-cols-6">
               <div className="flex">State:</div>
               <div className="col-span-5 flex flex-col">
@@ -302,12 +311,12 @@ export default function Category() {
               </div>
             </div>
           </div>
-          <div className="rounded-md bg-neutral-50 px-2 py-3">
+          <div className="rounded-md bg-neutral-50 px-2 pb-3">
             <div className="mb-4">
               <div className="pt-2">Child questions:</div>
               <div>
                 {questions && questions.length > 0 ? (
-                  <ul>
+                  <ul className='list-decimal list-inside'>
                     {questions.map((question) => {
                       return <li>{question.questionText}</li>
                     })}

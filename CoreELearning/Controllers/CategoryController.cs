@@ -2,7 +2,6 @@
 using CommonLibrary.Services.Interfaces;
 using CommonLibrary.ViewModel;
 using Microsoft.AspNetCore.Mvc;
-using System.Net;
 
 namespace CoreELearning.Controllers
 {

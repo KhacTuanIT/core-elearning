@@ -38,6 +38,11 @@ export const routes = [
           },
         ],
       },
+      {
+        icon: <HomeIcon {...icon} />,
+        name: 'Content',
+        path: '/content',
+      },
       // {
       //   icon: <TableCellsIcon {...icon} />,
       //   name: "tables",

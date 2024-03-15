@@ -2,7 +2,7 @@ export const adminModePage = {
   view: 'VIEW',
   edit: 'EDIT',
   create: 'CREATE',
-  viewDetail: 'VIEW_DETAIL'
+  viewDetail: 'VIEW_DETAIL',
 }
 
 export const handleValidateData = (
@@ -41,4 +41,9 @@ export const validateCategoryFields = {
 export const validateQuestionFields = {
   create: ['categoryId', 'questionText'],
   edit: ['id', 'categoryId', 'questionText'],
+}
+
+export const validateAnswerFields = {
+  create: ['questionId', 'answerText', 'shortAnswer'],
+  edit: ['id', 'questionId', 'answerText', 'shortAnswer'],
 }

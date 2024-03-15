@@ -119,6 +119,8 @@ namespace CommonLibrary.Services
             }
 
             entity.AnswerText = answer.AnswerText;
+            entity.ShortAnswer = answer.ShortAnswer;
+            entity.QuestionId = answer.QuestionId;
             entity.LastUpdate(Guid.Empty);
 
             var result = _unitOfWork.Repository<Answer>().Update(entity);

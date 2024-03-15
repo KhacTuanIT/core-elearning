@@ -21,12 +21,18 @@ export const question = createSlice({
   initialState: initialState,
   reducers: {
     setQuestion(state, action) {
-      state.currentQuestion = action.payload
+      return {
+        ...state,
+        currentQuestion: action.payload,
+      }
     },
-    getQuestion(state, action) {
-        
-        state.currentQuestion = state.questions.filter(x => x.id === action.payload)[0]
-    }
+    setQuestionById(state, action) {
+      const question = state.questions.find((x) => x.id === action.payload)
+      return {
+        ...state,
+        currentQuestion: question,
+      }
+    },
   },
   extraReducers: (builder) => {
     builder.addCase(getQuestionsByCategoryIdAsync.pending, (state, action) => {
@@ -98,9 +104,9 @@ export const question = createSlice({
         state.isLoading = true
       }),
       builder.addCase(deleteQuestion.fulfilled, (state, action) => {
-        state.currentCategory = action.payload.data
-        if (state.categories.length > 0) {
-          state.categories = state.categories.map((item) => {
+        state.currentQuestion = action.payload.data
+        if (state.questions.length > 0) {
+          state.questions = state.questions.map((item) => {
             if (item.id === action.payload.data.id) {
               item = action.payload.data
             }
@@ -116,9 +122,9 @@ export const question = createSlice({
         state.isLoading = true
       }),
       builder.addCase(restoreQuestion.fulfilled, (state, action) => {
-        state.currentCategory = action.payload.data
-        if (state.categories.length > 0) {
-          state.categories = state.categories.map((item) => {
+        state.currentQuestion = action.payload.data
+        if (state.questions.length > 0) {
+          state.questions = state.questions.map((item) => {
             if (item.id === action.payload.data.id) {
               item = action.payload.data
             }
@@ -133,4 +139,4 @@ export const question = createSlice({
   },
 })
 
-export const { setQuestion, getQuestion } = question.actions
+export const { setQuestion, setQuestionById } = question.actions

@@ -1,9 +1,7 @@
 ﻿using CommonLibrary.EDbContext;
-using CommonLibrary.Services;
 using CommonLibrary.Services.Interfaces;
 using CommonLibrary.ViewModel;
 using Microsoft.AspNetCore.Mvc;
-using System.Net;
 
 namespace CoreELearning.Controllers
 {
@@ -48,10 +46,10 @@ namespace CoreELearning.Controllers
         public async Task<ActionResult<ResponseVM>> GetByCategoryId(Guid categoryId)
         {
             var questions = await _questionService.GetQuestionsByCategoryId(categoryId);
-            return new ResponseVM() 
-            { 
-                Data = questions, 
-                Success = true 
+            return new ResponseVM()
+            {
+                Data = questions,
+                Success = true
             };
         }
 
@@ -75,6 +73,7 @@ namespace CoreELearning.Controllers
             {
                 Id = questionId,
                 QuestionText = question.QuestionText,
+                CategoryId = question.CategoryId,
                 Description = question.Description,
             };
             var result = await _questionService.UpdateQuestion(questionId, updateQuestion);
